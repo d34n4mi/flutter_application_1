@@ -12,35 +12,36 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // List to store study schedules
   final List<StudySchedule> schedules = [];
 
-  // Navigate to Add Schedule Screen
   Future<void> addSchedule() async {
-    final newSchedule = await Navigator.push<StudySchedule>(
+    final newSchedule = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const AddScheduleScreen(),
       ),
     );
 
-    if (newSchedule != null) {
+    if (!mounted) return;
+
+    if (newSchedule != null && newSchedule is StudySchedule) {
       setState(() {
         schedules.add(newSchedule);
       });
     }
   }
 
-  // Navigate to Detail Screen
   Future<void> openDetails(int index) async {
-    final shouldDelete = await Navigator.push<bool>(
+    final schedule = schedules[index];
+
+    final shouldDelete = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DetailScreen(
-          schedule: schedules[index],
-        ),
+        builder: (context) => DetailScreen(schedule: schedule),
       ),
     );
+
+    if (!mounted) return;
 
     if (shouldDelete == true) {
       setState(() {
@@ -59,90 +60,65 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Dysion',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: const Text('Dysion'),
         centerTitle: true,
       ),
-
-      body: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(20),
-            child: Text(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
               'Welcome to Dysion!',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-
-          const Text(
-            'Your Study Schedule',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+            const SizedBox(height: 8),
+            const Text(
+              'Your Study Schedule',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
+            const SizedBox(height: 16),
 
-          const SizedBox(height: 10),
+            Expanded(
+              child: schedules.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No study schedules yet.\n'
+                        'Add your first schedule!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: schedules.length,
+                      itemBuilder: (context, index) {
+                        final schedule = schedules[index];
 
-          Expanded(
-            child: schedules.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No study schedules yet.\nAdd your first schedule!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: schedules.length,
-                    itemBuilder: (context, index) {
-                      final schedule = schedules[index];
-
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
-                        ),
-                        child: ListTile(
-                          leading: const Icon(
-                            Icons.menu_book,
-                            color: Colors.blue,
-                          ),
-
-                          title: Text(
-                            schedule.subject,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            leading: const Icon(Icons.book),
+                            title: Text(schedule.subject),
+                            subtitle: Text(schedule.studyTime),
+                            trailing: const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
                             ),
+                            onTap: () => openDetails(index),
                           ),
-
-                          subtitle: Text(
-                            schedule.studyTime,
-                          ),
-
-                          trailing: const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                          ),
-
-                          onTap: () {
-                            openDetails(index);
-                          },
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
-
       floatingActionButton: FloatingActionButton(
         onPressed: addSchedule,
         child: const Icon(Icons.add),
